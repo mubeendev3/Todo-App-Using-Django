@@ -1,0 +1,47 @@
+/* todo/static/todo/css/style.css */
+
+/* ─── General ─────────────────────────────── */
+body {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ─── Navbar ──────────────────────────────── */
+.navbar-brand {
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+}
+
+/* ─── Cards ───────────────────────────────── */
+.card {
+    border-radius: 12px;
+    border: none;
+}
+
+/* ─── Task List Item ──────────────────────── */
+.list-group-item {
+    border-radius: 8px !important;
+    margin-bottom: 8px;
+    border: 1px solid #e0e0e0 !important;
+    transition: box-shadow 0.2s ease;
+}
+
+.list-group-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ─── Completed Task ──────────────────────── */
+.text-decoration-line-through {
+    opacity: 0.6;
+}
+
+/* ─── Priority Badges ─────────────────────── */
+.badge {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+    border-radius: 20px;
+}
+
+/* ─── Buttons ─────────────────────────────── */
+.btn {
+    border-radius: 8px;
+}

@@ -1,0 +1,121 @@
+<!-- todo/templates/todo/task_list.html -->
+{% extends 'todo/base.html' %}
+
+{% block title %}My Tasks{% endblock %}
+
+{% block content %}
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body text-center">
+                <h2 class="card-title">{{ total_tasks }}</h2>
+                <p class="card-text">Total Tasks</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body text-center">
+                <h2 class="card-title">{{ completed_tasks }}</h2>
+                <p class="card-text">Completed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-body text-center">
+                <h2 class="card-title">{{ pending_tasks }}</h2>
+                <p class="card-text">Pending</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter Form -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control"
+                       placeholder="Search tasks..." value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">All tasks</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="priority" class="form-select">
+                    <option value="">All priorities</option>
+                    <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>High</option>
+                    <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Low</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Task List -->
+{% if tasks %}
+    <div class="list-group shadow-sm">
+        {% for task in tasks %}
+        <div class="list-group-item list-group-item-action {% if task.completed %}bg-light{% endif %}">
+            <div class="d-flex align-items-center justify-content-between">
+                
+                <!-- Left Side: Checkbox + Title -->
+                <div class="d-flex align-items-center gap-3">
+                    <form method="POST" action="{% url 'todo:task_toggle' task.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm {% if task.completed %}btn-success{% else %}btn-outline-secondary{% endif %} rounded-circle">
+                            {% if task.completed %}✓{% else %}○{% endif %}
+                        </button>
+                    </form>
+                    
+                    <div>
+                        <h6 class="mb-0 {% if task.completed %}text-decoration-line-through text-muted{% endif %}">
+                            {{ task.title }}
+                        </h6>
+                        <small class="text-muted">
+                            {% if task.category %}{{ task.category.name }} &bull;{% endif %}
+                            {% if task.due_date %}Due: {{ task.due_date }}{% endif %}
+                        </small>
+                    </div>
+                </div>
+                
+                <!-- Right Side: Priority Badge + Actions -->
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge 
+                        {% if task.priority == 'high' %}bg-danger
+                        {% elif task.priority == 'medium' %}bg-warning text-dark
+                        {% else %}bg-secondary{% endif %}">
+                        {{ task.get_priority_display }}
+                    </span>
+                    
+                    <a href="{% url 'todo:task_update' task.pk %}" class="btn btn-sm btn-outline-primary">✏️</a>
+                    <a href="{% url 'todo:task_delete' task.pk %}" class="btn btn-sm btn-outline-danger">🗑️</a>
+                </div>
+                
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+{% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <h2>📋</h2>
+        <h4 class="text-muted">No tasks found</h4>
+        <p class="text-muted">Add a new task or clear your filters.</p>
+        <a href="{% url 'todo:task_create' %}" class="btn btn-primary">+ Add your first task</a>
+    </div>
+{% endif %}
+
+{% endblock %}
