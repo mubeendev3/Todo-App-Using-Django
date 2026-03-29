@@ -1,78 +1,124 @@
-# Deploy this project on PythonAnywhere
+# Deploy on PythonAnywhere — Todo App Using Django
 
-Replace `YOURUSERNAME` and paths with your account and clone location.
+This guide matches the repository **[Todo-App-Using-Django](https://github.com/mubeendev3/Todo-App-Using-Django)** and account **`mubeendev3`**.
 
-## 1. Push to GitHub
+| Item | Value |
+| ---- | ----- |
+| **GitHub** | https://github.com/mubeendev3/Todo-App-Using-Django |
+| **Site URL** | https://mubeendev3.pythonanywhere.com/ |
+| **Linux username** | `mubeendev3` |
 
-From your PC (with `.env` **not** committed — it is in `.gitignore`):
+---
+
+## Why you might see “The install worked successfully!”
+
+That page usually means the web app is not loading **this** project’s settings and URLs. Common causes:
+
+1. **`DJANGO_SETTINGS_MODULE`** is wrong. This repo uses **`todoproject.settings`**, not `todo_app.settings`.
+2. **`project_home`** in WSGI does not point to the folder that contains **`manage.py`**.
+3. Virtualenv or working directory in the PythonAnywhere **Web** tab does not match where you cloned the code.
+
+Fix the WSGI block below, reload the web app, and confirm **Source code** / **Working directory** point at that same folder.
+
+---
+
+## 1. Push code from your PC
+
+Ensure `.env` is **not** committed (it should be in `.gitignore`).
 
 ```bash
 git add .
 git status
-git commit -m "Initial commit: Django todo app"
-git branch -M main
-git remote add origin https://github.com/YOURUSERNAME/YOUR-REPO.git
-git push -u origin main
+git commit -m "Your message"
+git push origin master
 ```
+
+(Use `main` instead of `master` if that is your default branch.)
+
+---
 
 ## 2. Clone on PythonAnywhere (Bash console)
 
 ```bash
 cd ~
-git clone https://github.com/YOURUSERNAME/YOUR-REPO.git
-cd YOUR-REPO
+git clone https://github.com/mubeendev3/Todo-App-Using-Django.git
+cd Todo-App-Using-Django
+```
+
+Default clone folder name: **`Todo-App-Using-Django`**.  
+If you clone into a different folder (e.g. `todo_app`), use **that** path as `project_home` in WSGI — but **always** keep `DJANGO_SETTINGS_MODULE = 'todoproject.settings'`.
+
+Create a virtualenv (pick a Python version available on your account; 3.10+ is required for Django 6):
+
+```bash
 mkvirtualenv --python=/usr/bin/python3.12 venv
-# If python3.12 is unavailable, use: python3.11 or the version shown in PythonAnywhere docs
+# If 3.12 is unavailable, try: python3.11 or python3.10
+workon venv
 pip install -r requirements.txt
 ```
 
-## 3. Environment variables
+---
 
-Create a file **only on the server** (not in git), e.g. `~/.env-todo` or project `.env`:
+## 3. Environment variables (production)
+
+On the server only, create `.env` in the project root (same folder as `manage.py`):
 
 ```bash
-nano ~/YOUR-REPO/.env
+cd ~/Todo-App-Using-Django
+nano .env
 ```
 
-Set at least:
+Example:
 
 ```env
-DJANGO_SECRET_KEY=paste-a-new-secret-from-django-get_random_secret_key
+DJANGO_SECRET_KEY=paste-a-new-secret-here
 DJANGO_DEBUG=False
-ALLOWED_HOSTS=YOURUSERNAME.pythonanywhere.com
-CSRF_TRUSTED_ORIGINS=https://YOURUSERNAME.pythonanywhere.com
+ALLOWED_HOSTS=mubeendev3.pythonanywhere.com
+CSRF_TRUSTED_ORIGINS=https://mubeendev3.pythonanywhere.com
 ```
 
-Generate a key (on your PC or PA console):
+Generate a secret key:
 
 ```bash
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
 
-## 4. Database and static files
+---
+
+## 4. Migrate and collect static files
 
 ```bash
 workon venv
-cd ~/YOUR-REPO
+cd ~/Todo-App-Using-Django
 python manage.py migrate
 python manage.py collectstatic --noinput
 ```
 
-## 5. Web app (PythonAnywhere → Web tab)
+---
 
-1. **Add a new web app** → Manual configuration → Python version matching your venv.
-2. **Virtualenv**: `/home/YOURUSERNAME/YOUR-REPO/venv` (or `.virtualenvs/venv` if you used `mkvirtualenv` default — check `workon` path).
-3. **Source code / Working directory**: `/home/YOURUSERNAME/YOUR-REPO`.
-4. **Static files**:  
-   - URL: `/static/`  
-   - Directory: `/home/YOURUSERNAME/YOUR-REPO/staticfiles`
-5. **WSGI configuration file** — replace its contents with (adjust path and username):
+## 5. Web app configuration (Web tab)
+
+1. **Add a new web app** → **Manual configuration** → Python version matching your venv.
+2. **Virtualenv**: path to the venv, e.g. `/home/mubeendev3/.virtualenvs/venv` (run `which python` inside `workon venv` to confirm), or `/home/mubeendev3/Todo-App-Using-Django/venv` if you created `venv` inside the project.
+3. **Source code / Working directory**: `/home/mubeendev3/Todo-App-Using-Django` (or your actual clone path).
+4. **Static files**  
+   - **URL**: `/static/`  
+   - **Directory**: `/home/mubeendev3/Todo-App-Using-Django/staticfiles`
+
+---
+
+## 6. WSGI configuration file
+
+Open the WSGI file linked from the **Web** tab and **replace** its contents with the following.
+
+Adjust **`project_home`** if your clone lives somewhere other than `Todo-App-Using-Django`:
 
 ```python
 import os
 import sys
 
-project_home = '/home/YOURUSERNAME/YOUR-REPO'
+# Directory that contains manage.py (project root)
+project_home = '/home/mubeendev3/Todo-App-Using-Django'
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 
@@ -82,32 +128,59 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 ```
 
-If you prefer not to use a `.env` file on PA, set variables before `get_wsgi_application()`:
+### If you do not use `.env` on PythonAnywhere
+
+You can set variables in WSGI **before** `get_wsgi_application()` (less ideal than `.env`, but works):
 
 ```python
-os.environ['DJANGO_SECRET_KEY'] = 'your-generated-key'
-os.environ['DJANGO_DEBUG'] = 'False'
-os.environ['ALLOWED_HOSTS'] = 'YOURUSERNAME.pythonanywhere.com'
-os.environ['CSRF_TRUSTED_ORIGINS'] = 'https://YOURUSERNAME.pythonanywhere.com'
+os.environ.setdefault('DJANGO_SECRET_KEY', 'your-generated-secret')
+os.environ.setdefault('DJANGO_DEBUG', 'False')
+os.environ.setdefault('ALLOWED_HOSTS', 'mubeendev3.pythonanywhere.com')
+os.environ.setdefault('CSRF_TRUSTED_ORIGINS', 'https://mubeendev3.pythonanywhere.com')
 ```
 
-6. Click **Reload** on the web app.
+### About the old `todo_app` snippet
 
-## 6. Admin user (optional)
+If you previously used:
+
+```text
+project_home = '/home/mubeendev3/todo_app'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'todo_app.settings'
+```
+
+that does **not** match this repository. There is no `todo_app` Django package here; the settings module is **`todoproject.settings`**. Update WSGI as above and reload.
+
+---
+
+## 7. Reload and verify
+
+Click **Reload** on the web app. Visit:
+
+- App: https://mubeendev3.pythonanywhere.com/  
+- Admin (after `createsuperuser`): https://mubeendev3.pythonanywhere.com/admin/
 
 ```bash
 workon venv
-cd ~/YOUR-REPO
+cd ~/Todo-App-Using-Django
 python manage.py createsuperuser
 ```
 
-Open `https://YOURUSERNAME.pythonanywhere.com/admin/`.
+---
 
 ## Checklist
 
-- [ ] `DEBUG` is `False` in production  
-- [ ] Strong `DJANGO_SECRET_KEY` (not the dev default)  
-- [ ] `ALLOWED_HOSTS` includes your PA hostname  
-- [ ] `CSRF_TRUSTED_ORIGINS` includes `https://...` for that host  
-- [ ] `collectstatic` run and `/static/` mapped to `staticfiles`  
-- [ ] Web app reloaded after WSGI changes  
+- [ ] `DJANGO_DEBUG=False` in production  
+- [ ] Strong `DJANGO_SECRET_KEY` (never the dev default)  
+- [ ] `ALLOWED_HOSTS` includes `mubeendev3.pythonanywhere.com`  
+- [ ] `CSRF_TRUSTED_ORIGINS` includes `https://mubeendev3.pythonanywhere.com`  
+- [ ] `project_home` = folder containing `manage.py`  
+- [ ] `DJANGO_SETTINGS_MODULE` = `todoproject.settings`  
+- [ ] `collectstatic` run; `/static/` → `staticfiles`  
+- [ ] Web app **Reload** after WSGI changes  
+
+---
+
+## References
+
+- [PythonAnywhere — Deploying Django](https://help.pythonanywhere.com/pages/DeployExistingDjangoProject/)  
+- [Django deployment checklist](https://docs.djangoproject.com/en/stable/howto/deployment/checklist/)  
